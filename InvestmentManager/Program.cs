@@ -30,6 +30,7 @@ namespace InvestmentManager
                 )
                 .UseSetting("detailedErrors", "true")
                 .UseIISIntegration()
-                .UseStartup<Startup>();
+                .UseStartup<Startup>()
+                .UseUrls("http://0.0.0.0:51500");
     }
 }

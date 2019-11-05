@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+
+  frontend:
+    container_name: investment-manager-ui
+    build:
+      context: .
+      dockerfile: Docker/dotnetcore.Dockerfile
+    command: run --project ./InvestmentManager/InvestmentManager.csproj
+    expose:
+      - 51500
+    ports:
+      - 5000:51500
+    volumes:
+      - .:/home/app
+
+  webservice:
+    container_name: investment-manager-ws
+    build:
+      context: .
+      dockerfile: Docker/dotnetcore.Dockerfile
+    expose:
+      - 52505
+    ports:
+      - 5001:52505
+    volumes:
+      - .\StockIndexWebService:/home/app
