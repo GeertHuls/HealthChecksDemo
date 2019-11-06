@@ -68,7 +68,7 @@ namespace InvestmentManager
         {
             //app.UseHealthChecks("/health"); .NET Core 2.2
 
-            app.UseExceptionHandler("/Home/Error");
+            app.UseDeveloperExceptionPage();
             
             app.UseStaticFiles();
             app.UseCookiePolicy();

@@ -8,21 +8,49 @@ services:
       context: .
       dockerfile: Docker/dotnetcore.Dockerfile
     command: run --project ./InvestmentManager/InvestmentManager.csproj
-    expose:
-      - 51500
     ports:
       - 5000:51500
     volumes:
       - .:/home/app
+    depends_on:
+      - sqlserver-frontend
+
+  sqlserver-frontend:
+    image: mcr.microsoft.com/mssql/server
+    container_name: frontend-db
+    ports:
+      - "1500:1433"
+    volumes:
+      - hcinvestmentdata:/var/opt/mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=V3ryStr0ngPa55!
 
   webservice:
     container_name: investment-manager-ws
     build:
       context: .
       dockerfile: Docker/dotnetcore.Dockerfile
-    expose:
-      - 52505
     ports:
       - 5001:52505
     volumes:
       - .\StockIndexWebService:/home/app
+    depends_on:
+      - sqlserver-ws
+
+  sqlserver-ws:
+    image: mcr.microsoft.com/mssql/server
+    container_name: webservice-db
+    ports:
+      - "1433:1433"
+    volumes:
+      - hcwsdata:/var/opt/mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=V3ryStr0ngPa55!
+
+volumes:
+  hcwsdata:
+    name: healthchecks-ws-data
+  hcinvestmentdata:
+    name: healthchecks-ui-data
