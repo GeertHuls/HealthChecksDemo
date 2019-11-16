@@ -1,6 +1,7 @@
 ﻿using InvestmentManager.Core;
 using InvestmentManager.DataAccess.EF;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,8 +9,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NLog.Extensions.Logging;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace InvestmentManager
 {
@@ -87,12 +92,39 @@ namespace InvestmentManager
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapHealthChecks("/health");
-                    // use RequireHost in case the health endpoint
-                    // should only be visible on a certain host:
-                    //  .RequireHost("*:5000");
+                endpoints.MapHealthChecks("/health", new HealthCheckOptions()
+                {
+                    ResultStatusCodes = {
+                        [HealthStatus.Healthy] = StatusCodes.Status200OK,
+                        [HealthStatus.Degraded] = StatusCodes.Status500InternalServerError,
+                        [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+                    },
+                    ResponseWriter = WriteHealthCheckResponse
+                });
+                // use RequireHost in case the health endpoint
+                // should only be visible on a certain host:
+                //  .RequireHost("*:5000");
             });
 
+        }
+
+        private Task WriteHealthCheckResponse(HttpContext httpContext, HealthReport result)
+        {
+            httpContext.Response.ContentType = "application/json";
+            var json = new JObject(
+                    new JProperty("OverallStatus", result.Status.ToString()),
+                    new JProperty("TotalChecksDuration", result.TotalDuration.TotalSeconds.ToString("0:0.00")),
+                    new JProperty("DependencyHealthChecks", new JObject(
+                        result.Entries.Select(d =>
+                            new JProperty(d.Key, new JObject(
+                                new JProperty("Status", d.Value.Status.ToString()),
+                                new JProperty("Duration", d.Value.Duration.TotalSeconds.ToString("0:0.00"))
+                            )
+                        )
+                    ))
+                ));
+
+            return httpContext.Response.WriteAsync(json.ToString(Formatting.Indented));
         }
     }
 }
