@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using System;
@@ -59,7 +60,9 @@ namespace InvestmentManager
             });
 
             services.AddHealthChecks()
-                .AddSqlServer(connectionString);
+                .AddSqlServer(connectionString, failureStatus: HealthStatus.Unhealthy)
+                .AddUrlGroup(new Uri($"{stockIndexServiceUrl}/api/StockIndexes"),
+                    "Stock index api health check", HealthStatus.Degraded, timeout: new TimeSpan(0, 0, 5));
         }
 
 
