@@ -72,8 +72,7 @@ namespace InvestmentManager
                 .AddUrlGroup(new Uri($"{stockIndexServiceUrl}/api/StockIndexes"),
                     "Stock index api health check", HealthStatus.Degraded, tags: new [] { "ready" },
                     timeout: new TimeSpan(0, 0, 5))
-                .AddCheck("File path Health check.", new FilePathWriterHealthCheck(securityLogFilePath),
-                    HealthStatus.Unhealthy, tags: new [] { "ready" });
+                .AddFilePathWriter(securityLogFilePath, HealthStatus.Unhealthy, tags: new [] { "ready" });
         }
 
 
