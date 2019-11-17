@@ -102,13 +102,32 @@ namespace InvestmentManager
                         [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
                     },
                     ResponseWriter = WriteHealthCheckReadyResponse,
-                    Predicate = (check) => check.Tags.Contains("ready")
+                    Predicate = (check) => check.Tags.Contains("ready"),
+                    AllowCachingResponses = false
+                });
+
+                endpoints.MapHealthChecks("health/live", new HealthCheckOptions()
+                {
+                    Predicate = (check) => !check.Tags.Contains("ready"),
+                    ResponseWriter = WriteHealthCheckLiveResponse,
+                    AllowCachingResponses = false
                 });
                 // use RequireHost in case the health endpoint
                 // should only be visible on a certain host:
                 //  .RequireHost("*:5000");
             });
 
+        }
+
+        private Task WriteHealthCheckLiveResponse(HttpContext httpContext, HealthReport result)
+        {
+            httpContext.Response.ContentType = "application/json";
+            var json = new JObject(
+                    new JProperty("OverallStatus", result.Status.ToString()),
+                    new JProperty("TotalChecksDuration", result.TotalDuration.TotalSeconds.ToString("0:0.00"))
+                );
+
+            return httpContext.Response.WriteAsync(json.ToString(Formatting.Indented));
         }
 
         private Task WriteHealthCheckReadyResponse(HttpContext httpContext, HealthReport result)
