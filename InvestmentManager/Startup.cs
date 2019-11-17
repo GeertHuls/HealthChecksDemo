@@ -64,10 +64,12 @@ namespace InvestmentManager
                 loggingBuilder.AddNLog();
             });
 
+            // Dependency health checks:
             services.AddHealthChecks()
-                .AddSqlServer(connectionString, failureStatus: HealthStatus.Unhealthy)
+                .AddSqlServer(connectionString, failureStatus: HealthStatus.Unhealthy, tags: new [] { "ready" })
                 .AddUrlGroup(new Uri($"{stockIndexServiceUrl}/api/StockIndexes"),
-                    "Stock index api health check", HealthStatus.Degraded, timeout: new TimeSpan(0, 0, 5));
+                    "Stock index api health check", HealthStatus.Degraded, tags: new [] { "ready" },
+                    timeout: new TimeSpan(0, 0, 5));
         }
 
 
@@ -92,14 +94,15 @@ namespace InvestmentManager
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapHealthChecks("/health", new HealthCheckOptions()
+                endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions()
                 {
                     ResultStatusCodes = {
                         [HealthStatus.Healthy] = StatusCodes.Status200OK,
                         [HealthStatus.Degraded] = StatusCodes.Status500InternalServerError,
                         [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
                     },
-                    ResponseWriter = WriteHealthCheckResponse
+                    ResponseWriter = WriteHealthCheckReadyResponse,
+                    Predicate = (check) => check.Tags.Contains("ready")
                 });
                 // use RequireHost in case the health endpoint
                 // should only be visible on a certain host:
@@ -108,7 +111,7 @@ namespace InvestmentManager
 
         }
 
-        private Task WriteHealthCheckResponse(HttpContext httpContext, HealthReport result)
+        private Task WriteHealthCheckReadyResponse(HttpContext httpContext, HealthReport result)
         {
             httpContext.Response.ContentType = "application/json";
             var json = new JObject(
