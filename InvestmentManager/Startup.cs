@@ -64,12 +64,16 @@ namespace InvestmentManager
                 loggingBuilder.AddNLog();
             });
 
+            var securityLogFilePath = this.Configuration["SecurityLogFilePath"];
+
             // Dependency health checks:
             services.AddHealthChecks()
                 .AddSqlServer(connectionString, failureStatus: HealthStatus.Unhealthy, tags: new [] { "ready" })
                 .AddUrlGroup(new Uri($"{stockIndexServiceUrl}/api/StockIndexes"),
                     "Stock index api health check", HealthStatus.Degraded, tags: new [] { "ready" },
-                    timeout: new TimeSpan(0, 0, 5));
+                    timeout: new TimeSpan(0, 0, 5))
+                .AddCheck("File path Health check.", new FilePathWriterHealthCheck(securityLogFilePath),
+                    HealthStatus.Unhealthy, tags: new [] { "ready" });
         }
 
 
@@ -140,11 +144,17 @@ namespace InvestmentManager
                         result.Entries.Select(d =>
                             new JProperty(d.Key, new JObject(
                                 new JProperty("Status", d.Value.Status.ToString()),
-                                new JProperty("Duration", d.Value.Duration.TotalSeconds.ToString("0:0.00"))
+                                new JProperty("Duration", d.Value.Duration.TotalSeconds.ToString("0:0.00")),
+                                new JProperty("Exception", d.Value.Exception?.Message),
+                                new JProperty("Data", new JObject(
+                                    d.Value
+                                    .Data
+                                    .Select(p => new JProperty(p.Key, p.Value))
+                                )
                             )
                         )
                     ))
-                ));
+                )));
 
             return httpContext.Response.WriteAsync(json.ToString(Formatting.Indented));
         }
