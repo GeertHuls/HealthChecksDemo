@@ -1,4 +1,5 @@
-﻿using InvestmentManager.Core;
+﻿using HealthChecks.UI.Client;
+using InvestmentManager.Core;
 using InvestmentManager.DataAccess.EF;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -73,6 +74,8 @@ namespace InvestmentManager
                     "Stock index api health check", HealthStatus.Degraded, tags: new [] { "ready" },
                     timeout: new TimeSpan(0, 0, 5))
                 .AddFilePathWriter(securityLogFilePath, HealthStatus.Unhealthy, tags: new [] { "ready" });
+
+            services.AddHealthChecksUI();
         }
 
 
@@ -115,11 +118,20 @@ namespace InvestmentManager
                     ResponseWriter = WriteHealthCheckLiveResponse,
                     AllowCachingResponses = false
                 });
+
+
+                endpoints.MapHealthChecks("healthui", new HealthCheckOptions()
+                {
+                    Predicate = _ => true,
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                });
+
                 // use RequireHost in case the health endpoint
                 // should only be visible on a certain host:
                 //  .RequireHost("*:5000");
             });
 
+            app.UseHealthChecksUI();
         }
 
         private Task WriteHealthCheckLiveResponse(HttpContext httpContext, HealthReport result)

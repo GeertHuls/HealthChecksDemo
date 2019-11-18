@@ -8,7 +8,7 @@ namespace InvestmentManager.DataAccess.EF
     {
 
 
-        public InvestmentContext(DbContextOptions options) : base(options)
+        public InvestmentContext(DbContextOptions<InvestmentContext> options) : base(options)
         {
 
         }
