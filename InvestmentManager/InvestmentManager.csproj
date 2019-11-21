@@ -10,6 +10,7 @@
     <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="3.0.0"/>
     <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="3.0.0"/>
     <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="3.0.0"/>
+    <PackageReference Include="AspNetCoreRateLimit" Version="3.0.5" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\InvestmentManager.Core\InvestmentManager.Core.csproj"/>
