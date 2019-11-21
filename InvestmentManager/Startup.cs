@@ -76,6 +76,20 @@ namespace InvestmentManager
                 .AddFilePathWriter(securityLogFilePath, HealthStatus.Unhealthy, tags: new [] { "ready" });
 
             services.AddHealthChecksUI();
+
+            services.AddAuthorization(options => {
+                options.AddPolicy("HealthCheckPolicy", policy =>
+                                  policy.RequireClaim("client_policy", "healthChecks"));
+            });
+
+            services.AddAuthentication("Bearer")
+                .AddJwtBearer("Bearer", options =>
+                {
+                    options.Authority = "http://idserver:50337";
+                    options.RequireHttpsMetadata = false;
+
+                    options.Audience = "InvestmentManagerAPI";
+                });
         }
 
         // Configures the HTTP request pipeline.
@@ -88,14 +102,17 @@ namespace InvestmentManager
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
+            app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.UseMvc(routes =>
             {
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
-
-            app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
@@ -109,20 +126,20 @@ namespace InvestmentManager
                     ResponseWriter = WriteHealthCheckReadyResponse,
                     Predicate = (check) => check.Tags.Contains("ready"),
                     AllowCachingResponses = false
-                });
+                }); // Enable authentication: .RequireAuthorization();
 
                 endpoints.MapHealthChecks("health/live", new HealthCheckOptions()
                 {
                     Predicate = (check) => !check.Tags.Contains("ready"),
                     ResponseWriter = WriteHealthCheckLiveResponse,
                     AllowCachingResponses = false
-                });
+                }); // Enable authentication: .RequireAuthorization("HealthCheckPolicy"); // --> refers to policy defined above
 
                 endpoints.MapHealthChecks("healthui", new HealthCheckOptions()
                 {
                     Predicate = _ => true,
                     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-                });
+                }); // Enable authentication: .RequireAuthorization();
 
                 // use RequireHost in case the health endpoint
                 // should only be visible on a certain host:
