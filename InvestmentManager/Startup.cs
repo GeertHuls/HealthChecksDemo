@@ -78,7 +78,6 @@ namespace InvestmentManager
             services.AddHealthChecksUI();
         }
 
-
         // Configures the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -119,7 +118,6 @@ namespace InvestmentManager
                     AllowCachingResponses = false
                 });
 
-
                 endpoints.MapHealthChecks("healthui", new HealthCheckOptions()
                 {
                     Predicate = _ => true,
@@ -131,6 +129,7 @@ namespace InvestmentManager
                 //  .RequireHost("*:5000");
             });
 
+            // The health checks ui is located at: http://localhost:???/healthchecks-ui
             app.UseHealthChecksUI();
         }
 
