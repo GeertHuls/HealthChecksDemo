@@ -133,7 +133,13 @@ namespace InvestmentManager
                     Predicate = (check) => !check.Tags.Contains("ready"),
                     ResponseWriter = WriteHealthCheckLiveResponse,
                     AllowCachingResponses = false
-                }); // Enable authentication: .RequireAuthorization("HealthCheckPolicy"); // --> refers to policy defined above
+                }) // Enable authentication: .RequireAuthorization("HealthCheckPolicy"); // --> refers to policy defined above
+                // .RequireCors(builder => {
+                //     builder.WithOrigins("http://example.com", "http://example2.com");
+                //     // or
+                //     //builder.AllowAnyOrigin();
+                // })
+                ;
 
                 endpoints.MapHealthChecks("healthui", new HealthCheckOptions()
                 {
