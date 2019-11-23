@@ -8,6 +8,12 @@ services:
       context: .
       dockerfile: Docker/dotnetcore.Dockerfile
     command: run --project ./InvestmentManager/InvestmentManager.csproj
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:51500/health/ready"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     ports:
       - 5000:51500
     volumes:
