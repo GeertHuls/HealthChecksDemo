@@ -2,6 +2,7 @@
 using HealthChecks.UI.Client;
 using InvestmentManager.Core;
 using InvestmentManager.DataAccess.EF;
+using InvestmentManager.HealthChecks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
@@ -93,6 +94,20 @@ namespace InvestmentManager
 
                     options.Audience = "InvestmentManagerAPI";
                 });
+
+            services.Configure<HealthCheckPublisherOptions>(opt =>
+            {
+                // timespan health checks start polling after startup:
+                opt.Delay = TimeSpan.FromSeconds(5);
+                // run health checks every 10 seconds (default is 30 seconds):
+                opt.Period = TimeSpan.FromSeconds(10);
+                // filter on specific tags to run:
+                opt.Predicate = (c) => c.Tags.Contains("ready");
+                // how long to wait for health check to timeout
+                opt.Timeout = TimeSpan.FromSeconds(20);
+            });
+
+            services.AddSingleton<IHealthCheckPublisher, TestHealthCheckPublisher>();
         }
 
         private void ConfigureRateLimit(IServiceCollection services, IConfiguration configuration)
